@@ -2,8 +2,6 @@ import argparse
 import os
 import yaml
 
-from util import fix_path_case
-
 
 class GameLinkerConfig:
     def __init__(self):
@@ -11,11 +9,10 @@ class GameLinkerConfig:
         self.config_path = os.path.join(os.path.dirname(__file__), 'config.yaml')
         self.platform = None
         self.target = 'ssd'
-        self.target_path = None
         self.source = 'hdd'
-        self.source_path = None
         self.game = None
         self.reverse = False
+        self.create_dirs = False
         self._parse_arguments()
 
     def _build_arg_parser(self):
@@ -27,6 +24,7 @@ class GameLinkerConfig:
                             help='the original location of the game folder (where the link will be created)')
         parser.add_argument('-t', '--target', help='final location of game folder')
         parser.add_argument('-r', '--reverse', action='store_true', help='reverses the operation')
+        parser.add_argument('-d', '--create-dirs', action='store_true', help='creates the directory if missing')
         parser.add_argument('game')
         return parser
 
@@ -53,18 +51,16 @@ class GameLinkerConfig:
         if args.source:
             self.source = args.source
         assert self.source in self.config[self.platform]
-        self.source_path = self.config[self.platform][self.source]
-        assert os.path.exists(self.source_path)
-        self.source_path = fix_path_case(self.source_path)
+        self.source_dir = os.path.normpath(self.config[self.platform][self.source])
+        self.source_path = os.path.join(self.source_dir, self.game)
 
         if args.target:
             self.target = args.target
         assert self.target in self.config[self.platform]
-        self.target_path = self.config[self.platform][self.target]
-        assert os.path.exists(self.target_path)
-        self.target_path = fix_path_case(self.target_path)
+        self.target_dir = os.path.normpath(self.config[self.platform][self.target])
+        self.target_path = os.path.join(self.target_dir, self.game)
 
-        assert self.source_path != self.target_path
+        assert self.source_path.lower() != self.target_path.lower()
 
         if args.reverse:
             self.reverse = True

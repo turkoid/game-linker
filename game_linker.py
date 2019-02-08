@@ -10,16 +10,45 @@ from util import fix_path_case
 class GameLinker:
     def __init__(self, config: GameLinkerConfig):
         self.config = config
-        self.source_path = os.path.join(self.config.source_path, self.config.game)
-        self.target_path = os.path.join(self.config.target_path, self.config.game)
+        self.source_dir = self.config.source_dir
+        self.source_path = self.config.source_path
+        self.target_dir = self.config.target_dir
+        self.target_path = self.config.target_path
 
-    def link(self):
+    def _fix_paths(self):
+        if os.path.exists(self.config.source_dir):
+            self.source_dir = fix_path_case(self.config.source_dir)
+        if os.path.exists(self.config.target_dir):
+            self.target_dir = fix_path_case(self.config.target_dir)
+
+        self.source_path = os.path.join(self.source_dir, self.config.game)
+        self.target_path = os.path.join(self.target_dir, self.config.game)
+
         source_exists = os.path.exists(self.source_path)
         target_exists = os.path.exists(self.target_path)
+
         if source_exists:
             self.source_path = fix_path_case(self.source_path)
+            if not target_exists:
+                game = os.path.basename(self.source_path)
+                self.target_path = os.path.join(self.target_dir, game)
         if target_exists:
             self.target_path = fix_path_case(self.target_path)
+            if not source_exists:
+                game = os.path.basename(self.target_path)
+                self.source_path = os.path.join(self.source_dir, game)
+
+    def link(self, create_dirs=False):
+        if create_dirs:
+            if not os.path.exists(self.config.source_dir):
+                os.makedirs(self.config.source_dir)
+            if not os.path.exists(self.config.target_dir):
+                os.makedirs(self.config.target_dir)
+
+        self._fix_paths()
+
+        source_exists = os.path.exists(self.source_path)
+        target_exists = os.path.exists(self.target_path)
 
         if not source_exists and not target_exists:
             sys.exit('Game folder does not exist in either location')
