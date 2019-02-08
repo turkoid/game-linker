@@ -11,21 +11,23 @@ class CopyProgress:
     def __init__(self, src, dst):
         self.src = src
         self.dst = dst
+        self.show_current_file = False
         self._build_bar()
 
-    def copyfileobj(self, fsrc, fdst, length=16 * 1024):
+    def copyfileobj(self, fsrc, fdst, length=1000 * 1024):
         while True:
             buf = fsrc.read(length)
             if not buf:
                 break
             fdst.write(buf)
-            self.bar.set_postfix(file=fix_path_case(fsrc.name), refresh=False)
+            if self.show_current_file:
+                self.bar.set_postfix(file=fix_path_case(fsrc.name), refresh=False)
             self.bar.update(len(buf))
 
     def _build_bar(self):
         total = 0
         if os.path.isdir(self.src):
-            for filepath in tqdm(walkdir(self.src), unit="files"):
+            for filepath in tqdm(walkdir(self.src), unit="files", desc='Determining src size'):
                 total += os.stat(filepath).st_size
         else:
             total = os.stat(self.src).st_size
@@ -42,6 +44,8 @@ class CopyProgress:
                 dst = shutil.copy(src, dst, follow_symlinks=follow_symlinks)
         finally:
             shutil.copyfileobj = _orig_copyfileobj
+            p.bar.close()
+
         return dst
 
     @staticmethod
@@ -52,4 +56,6 @@ class CopyProgress:
             dst = shutil.move(src, dst)
         finally:
             shutil.copyfileobj = _orig_copyfileobj
+            p.bar.close()
+
         return dst
