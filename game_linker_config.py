@@ -61,6 +61,8 @@ class GameLinkerConfig:
         self.source_path = self.config[self.platform][self.source]
         assert os.path.exists(self.source_path)
 
+        assert self.source_path != self.target_path
+
         if args.reverse:
             self.reverse = True
 
