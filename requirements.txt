@@ -1,2 +1,3 @@
 PyYaml>=4.2b1
 tqdm>=4.30.0
+pypiwin32>=223
