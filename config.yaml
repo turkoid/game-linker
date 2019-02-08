@@ -1,0 +1,24 @@
+steam:
+  hdd: C:\home\games\steam\steamapps\common
+  ssd: C:\home\games\ssd\steam
+uplay:
+  hdd: C:\home\games\uplay
+  ssd: C:\home\games\ssd\uplay
+bethesda:
+  hdd: C:\home\games\bethesda
+  ssd: C:\home\games\ssd\bethesda
+origin:
+  hdd: C:\home\games\origin
+  ssd: C:\home\games\ssd\origin
+gog:
+  hdd: C:\home\games\gog
+  ssd: C:\home\games\ssd\gog
+battle.net:
+  hdd: C:\home\games\battle.net
+  ssd: C:\home\games\ssd\battle.net
+epic:
+  hdd: C:\home\games\epic
+  ssd: C:\home\games\ssd\epic
+twitch:
+  hdd: C:\home\games\epic
+  ssd: C:\home\games\ssd\epic
