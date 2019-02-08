@@ -1,9 +1,9 @@
 import os
 import sys
-import shutil
 import _winapi
 
 from game_linker_config import GameLinkerConfig
+from progress import Progress
 
 
 class GameLinker:
@@ -22,19 +22,19 @@ class GameLinker:
                 # this remove directory will fail if not a link, unless the directory is empty
                 # if the dir is empty, then it's not a big deal if the directory is accidentally deleted
                 os.rmdir(self.source_path)
-                shutil.move(self.target_path, self.source_path)
+                Progress.move(self.target_path, self.source_path)
                 print(f'Junction removed: {self.source_path} <== {self.target_path}')
             elif source_exists:
                 sys.exit('Target does not exist')
             else:
-                shutil.move(self.target_path, self.source_path)
+                Progress.move(self.target_path, self.source_path)
                 print(f'Junction removed: {self.source_path} <== {self.target_path}')
         else:
             if source_exists and target_exists:
                 sys.exit('Game folder exists in both locations')
             elif source_exists:
                 assert os.path.isdir(self.source_path)
-                shutil.move(self.source_path, self.target_path)
+                Progress.move(self.source_path, self.target_path)
             assert os.path.isdir(self.target_path)
             _winapi.CreateJunction(self.target_path, self.source_path)
             print(f'Junction created: {self.source_path} ==> {self.target_path}')
