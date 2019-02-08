@@ -1,7 +1,6 @@
 import argparse
 import os
 import yaml
-import sys
 
 from util import fix_path_case
 
