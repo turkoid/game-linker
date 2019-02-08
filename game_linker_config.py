@@ -3,6 +3,8 @@ import os
 import yaml
 import sys
 
+from util import fix_path_case
+
 
 class GameLinkerConfig:
     def __init__(self):
@@ -49,17 +51,19 @@ class GameLinkerConfig:
             self.platform = self._get_platform_from_dir(current_dir)
             assert self.platform
 
-        if args.target:
-            self.target = args.target
-        assert self.target in self.config[self.platform]
-        self.target_path = self.config[self.platform][self.target]
-        assert os.path.exists(self.target_path)
-
         if args.source:
             self.source = args.source
         assert self.source in self.config[self.platform]
         self.source_path = self.config[self.platform][self.source]
         assert os.path.exists(self.source_path)
+        self.source_path = fix_path_case(self.source_path)
+
+        if args.target:
+            self.target = args.target
+        assert self.target in self.config[self.platform]
+        self.target_path = self.config[self.platform][self.target]
+        assert os.path.exists(self.target_path)
+        self.target_path = fix_path_case(self.target_path)
 
         assert self.source_path != self.target_path
 

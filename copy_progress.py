@@ -1,20 +1,17 @@
 import os
 import shutil
 from tqdm import tqdm
-import win32api
+
+from util import fix_path_case, walkdir
 
 _orig_copyfileobj = shutil.copyfileobj
 
 
-class Progress:
+class CopyProgress:
     def __init__(self, src, dst):
         self.src = src
         self.dst = dst
         self._build_bar()
-
-    @staticmethod
-    def fix_path_case(file):
-        return win32api.GetLongPathName(path)
 
     def copyfileobj(self, fsrc, fdst, length=16 * 1024):
         while True:
@@ -22,19 +19,13 @@ class Progress:
             if not buf:
                 break
             fdst.write(buf)
-            self.bar.set_postfix(file=Progress.fix_path_case(fsrc.name), refresh=False)
+            self.bar.set_postfix(file=fix_path_case(fsrc.name), refresh=False)
             self.bar.update(len(buf))
-
-    @staticmethod
-    def walkdir(directory):
-        for dir_path, dirs, files in os.walk(directory):
-            for filename in files:
-                yield os.path.abspath(os.path.join(dir_path, filename))
 
     def _build_bar(self):
         total = 0
         if os.path.isdir(self.src):
-            for filepath in tqdm(Progress.walkdir(self.src), unit="files"):
+            for filepath in tqdm(walkdir(self.src), unit="files"):
                 total += os.stat(filepath).st_size
         else:
             total = os.stat(self.src).st_size
@@ -42,7 +33,7 @@ class Progress:
 
     @staticmethod
     def copy(src, dst, follow_symlinks=True):
-        p = Progress(src, dst)
+        p = CopyProgress(src, dst)
         try:
             shutil.copyfileobj = p.copyfileobj
             if os.path.isdir(src):
@@ -55,7 +46,7 @@ class Progress:
 
     @staticmethod
     def move(src, dst):
-        p = Progress(src, dst)
+        p = CopyProgress(src, dst)
         try:
             shutil.copyfileobj = p.copyfileobj
             dst = shutil.move(src, dst)
