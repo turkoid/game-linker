@@ -15,6 +15,11 @@ class GameLinker:
     def link(self):
         source_exists = os.path.exists(self.source_path)
         target_exists = os.path.exists(self.target_path)
+        if source_exists:
+            self.source_path = Progress.fix_path_case(self.source_path)
+        if target_exists:
+            self.target_path = Progress.fix_path_case(self.target_path)
+
         if not source_exists and not target_exists:
             sys.exit('Game folder does not exist in either location')
         if self.config.reverse:
