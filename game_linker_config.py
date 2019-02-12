@@ -13,6 +13,7 @@ class GameLinkerConfig:
         self.game = None
         self.reverse = False
         self.create_dirs = False
+        self.exact = False
         self._parse_arguments()
 
     def _build_arg_parser(self):
@@ -62,6 +63,9 @@ class GameLinkerConfig:
         self.target_path = os.path.join(self.target_dir, self.game)
 
         assert self.source_path.lower() != self.target_path.lower()
+
+        self.create_dirs = args.create_dirs
+        self.exact = args.exact
 
         if args.reverse:
             self.reverse = True
