@@ -25,6 +25,7 @@ class GameLinkerConfig:
         parser.add_argument('-t', '--target', help='final location of game folder')
         parser.add_argument('-r', '--reverse', action='store_true', help='reverses the operation')
         parser.add_argument('-d', '--create-dirs', action='store_true', help='creates the directory if missing')
+        parser.add_argument('-e', '--exact', action='store_true', help='finds the game using exact match')
         parser.add_argument('game')
         return parser
 
