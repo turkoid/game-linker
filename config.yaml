@@ -2,7 +2,7 @@ steam:
   hdd: C:\home\games\steam\steamapps\common
   ssd: C:\home\games\ssd\steam
   ignore:
-    -steamapps
+    - steamapps
 uplay:
   hdd: C:\home\games\uplay
   ssd: C:\home\games\ssd\uplay
