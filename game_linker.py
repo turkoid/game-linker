@@ -2,6 +2,8 @@ import os
 import sys
 import _winapi
 
+from typing import Union
+
 from game_linker_config import GameLinkerConfig
 from copy_progress import CopyProgress
 from util import fix_path_case
@@ -14,15 +16,16 @@ class GameLinker:
         self.source_path = self.config.source_path
         self.target_dir = self.config.target_dir
         self.target_path = self.config.target_path
+        self.game = self.config.game
 
-    def _fix_paths(self, game):
+    def _fix_paths(self):
         if os.path.exists(self.source_dir):
             self.source_dir = fix_path_case(self.source_dir)
         if os.path.exists(self.target_dir):
             self.target_dir = fix_path_case(self.target_dir)
 
-        self.source_path = os.path.join(self.source_dir, game)
-        self.target_path = os.path.join(self.target_dir, game)
+        self.source_path = os.path.join(self.source_dir, self.game)
+        self.target_path = os.path.join(self.target_dir, self.game)
 
         source_exists = os.path.exists(self.source_path)
         target_exists = os.path.exists(self.target_path)
@@ -31,63 +34,74 @@ class GameLinker:
             self.source_path = fix_path_case(self.source_path)
             if not target_exists:
                 game = os.path.basename(self.source_path)
-                self.target_path = os.path.join(self.target_dir, game)
+                self.target_path = os.path.join(self.target_dir, self.game)
         if target_exists:
             self.target_path = fix_path_case(self.target_path)
             if not source_exists:
                 game = os.path.basename(self.target_path)
-                self.source_path = os.path.join(self.source_dir, game)
+                self.source_path = os.path.join(self.source_dir, self.game)
+
+    def _get_padded_option(self, option: Union[int, str], description: str, pad: int) -> str:
+        return f'{option:>{pad}}: {description}'
 
     def _get_game(self):
-        if not self.config.exact and not os.path.exists(self.source_path) and not os.path.exists(self.target_path):
-            game = self.config.game.lower()
-            games = []
-            for entry in os.scandir(self.source_dir):
-                if entry.is_dir() and game in entry.name.lower():
-                    games.append(entry.name)
-            for entry in os.scandir(self.target_dir):
-                if entry.is_dir() and game in entry.name.lower() and entry.name not in games:
-                    games.append(entry.name)
-
-            if not games:
+        if self.config.exact:
+            return self.game
+        game = self.game.lower()
+        games = []
+        for entry in os.scandir(self.source_dir):
+            if entry.is_dir() and game in entry.name.lower():
+                games.append(entry.name)
+        for entry in os.scandir(self.target_dir):
+            if entry.is_dir() and game in entry.name.lower() and entry.name not in games:
+                games.append(entry.name)
+        games = [g for g in games if g.lower() not in self.config.ignore_games]
+        if not games:
+            if self.config.game:
                 sys.exit(f'No games found containing "{self.config.game}"')
+            else:
+                sys.exit(f'No games found for "{self.config.platform}" platform')
+        if len(games) == 1:
+            return games[0]
 
-            games.sort()
-            game = None
-            lower_game_index = 1
-            display_count = 10
-            print(f'Found {len(games)} containing "{self.config.game}"')
-            while not game:
-                valid_options = ['q']
-                if lower_game_index > 1:
-                    valid_options.append('<')
-                    print('<: Previous')
-                upper_game_index = min(lower_game_index + display_count, len(games))
-                for game_index, game in enumerate(games[lower_game_index - 1:upper_game_index], start=1):
-                    valid_options.extend(range(lower_game_index, upper_game_index + 1))
-                    print(f'{game_index:<{len(str(upper_game_index))}}: {game}')
-                if upper_game_index < len(games):
-                    valid_options.append('>')
-                    print('>: Next')
-                print('q: Exit')
-                while True:
-                    option = input('What game? ')
-                    if not option:
-                        continue
-                    if option in valid_options or lower_game_index <= int(option) <= upper_game_index:
-                        if option == 'q':
-                            sys.exit('Exiting...')
-                        elif option == '<':
-                            lower_game_index -= display_count
-                        elif option == '>':
-                            lower_game_index += display_count
-                        else:
-                            game = games[int(option) - 1]
-                        break
+        games.sort(key=lambda g: g.lower())
+        game = None
+        lower_game_index = 1
+        display_count = 10
+        if self.config.game:
+            print(f'Found {len(games)} games containing "{self.config.game}"')
         else:
-            game = self.config.game
-
-        return game
+            print(f'Found {len(games)} games for "{self.config.platform}" platform')
+        while not game:
+            upper_game_index = min(lower_game_index + display_count - 1, len(games))
+            pad = len(str(upper_game_index))
+            valid_options = ([str(n) for n in range(1, upper_game_index + 1)])
+            for game_index, game in enumerate(games[lower_game_index - 1:upper_game_index], start=lower_game_index):
+                print(self._get_padded_option(game_index, game, pad))
+            if lower_game_index > 1:
+                valid_options.append('<')
+                print(self._get_padded_option('<', 'Previous', pad))
+            if upper_game_index < len(games):
+                valid_options.append('>')
+                print(self._get_padded_option('>', 'Next', pad))
+            valid_options.append('q')
+            print(self._get_padded_option('q', 'Exit', pad))
+            game = None
+            while True:
+                option = input('What game? ')
+                if not option:
+                    continue
+                option = option.strip().lower()
+                if option in valid_options:
+                    if option == 'q':
+                        sys.exit('Exiting...')
+                    elif option == '<':
+                        lower_game_index -= display_count
+                    elif option == '>':
+                        lower_game_index += display_count
+                    else:
+                        return games[int(option) - 1]
+                    break
 
     def link(self):
         if self.config.create_dirs:
@@ -96,10 +110,18 @@ class GameLinker:
             if not os.path.exists(self.config.target_dir):
                 os.makedirs(self.config.target_dir)
 
-        game = self._get_game()
-        print('testing=', game)
-        quit(0)
-        self._fix_paths(game)
+        self.game = self._get_game()
+        assert self.game
+        self._fix_paths()
+        while True:
+            confirm = input(f'Are you sure you want to link "{self.game}"? ')
+            if not confirm:
+                continue
+            confirm = confirm.strip().lower()
+            if confirm in ['y', 'yes']:
+                break
+            elif confirm in ['n', 'no']:
+                sys.exit('Exiting...')
 
         source_exists = os.path.exists(self.source_path)
         target_exists = os.path.exists(self.target_path)
