@@ -21,20 +21,19 @@ class GameLinkerConfig:
             description='Moves a game folder to different location and creates a link to it')
         parser.add_argument('-c', '--config', help='location of config file')
         parser.add_argument('-p', '--platform', help='gaming platform')
-        parser.add_argument('-s', '--source',
+        parser.add_argument('-s', '--source', default='hdd',
                             help='the original location of the game folder (where the link will be created)')
-        parser.add_argument('-t', '--target', help='final location of game folder')
+        parser.add_argument('-t', '--target', default='ssd', help='final location of game folder')
         parser.add_argument('-r', '--reverse', action='store_true', help='reverses the operation')
         parser.add_argument('-d', '--create-dirs', action='store_true', help='creates the directory if missing')
         parser.add_argument('-e', '--exact', action='store_true', help='finds the game using exact match')
-        parser.add_argument('game')
+        parser.add_argument('game', nargs='?', default='', help='full/partial game name')
         return parser
 
     def _parse_arguments(self):
         parser = self._build_arg_parser()
         args = parser.parse_args()
 
-        assert args.game
         self.game = args.game
 
         if args.config:
@@ -53,7 +52,7 @@ class GameLinkerConfig:
         if self.config[self.platform]['ignore']:
             self.ignore_games = self.config[self.platform]['ignore']
             assert isinstance(self.ignore_games, list)
-        self.ignore_games = [g for g in self.ignore_games if g]
+            self.ignore_games = [g.lower() for g in self.ignore_games if g]
 
         if args.source:
             self.source = args.source
@@ -71,6 +70,8 @@ class GameLinkerConfig:
 
         self.create_dirs = args.create_dirs
         self.exact = args.exact
+        if self.exact:
+            assert self.game
 
         if args.reverse:
             self.reverse = True
