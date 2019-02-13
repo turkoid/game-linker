@@ -15,14 +15,14 @@ class GameLinker:
         self.target_dir = self.config.target_dir
         self.target_path = self.config.target_path
 
-    def _fix_paths(self):
-        if os.path.exists(self.config.source_dir):
-            self.source_dir = fix_path_case(self.config.source_dir)
-        if os.path.exists(self.config.target_dir):
-            self.target_dir = fix_path_case(self.config.target_dir)
+    def _fix_paths(self, game):
+        if os.path.exists(self.source_dir):
+            self.source_dir = fix_path_case(self.source_dir)
+        if os.path.exists(self.target_dir):
+            self.target_dir = fix_path_case(self.target_dir)
 
-        self.source_path = os.path.join(self.source_dir, self.config.game)
-        self.target_path = os.path.join(self.target_dir, self.config.game)
+        self.source_path = os.path.join(self.source_dir, game)
+        self.target_path = os.path.join(self.target_dir, game)
 
         source_exists = os.path.exists(self.source_path)
         target_exists = os.path.exists(self.target_path)
@@ -38,14 +38,68 @@ class GameLinker:
                 game = os.path.basename(self.target_path)
                 self.source_path = os.path.join(self.source_dir, game)
 
-    def link(self, create_dirs=False):
-        if create_dirs:
+    def _get_game(self):
+        if not self.config.exact and not os.path.exists(self.source_path) and not os.path.exists(self.target_path):
+            game = self.config.game.lower()
+            games = []
+            for entry in os.scandir(self.source_dir):
+                if entry.is_dir() and game in entry.name.lower():
+                    games.append(entry.name)
+            for entry in os.scandir(self.target_dir):
+                if entry.is_dir() and game in entry.name.lower() and entry.name not in games:
+                    games.append(entry.name)
+
+            if not games:
+                sys.exit(f'No games found containing "{self.config.game}"')
+
+            games.sort()
+            game = None
+            lower_game_index = 1
+            display_count = 10
+            print(f'Found {len(games)} containing "{self.config.game}"')
+            while not game:
+                valid_options = ['q']
+                if lower_game_index > 1:
+                    valid_options.append('<')
+                    print('<: Previous')
+                upper_game_index = min(lower_game_index + display_count, len(games))
+                for game_index, game in enumerate(games[lower_game_index - 1:upper_game_index], start=1):
+                    valid_options.extend(range(lower_game_index, upper_game_index + 1))
+                    print(f'{game_index:<{len(str(upper_game_index))}}: {game}')
+                if upper_game_index < len(games):
+                    valid_options.append('>')
+                    print('>: Next')
+                print('q: Exit')
+                while True:
+                    option = input('What game? ')
+                    if not option:
+                        continue
+                    if option in valid_options or lower_game_index <= int(option) <= upper_game_index:
+                        if option == 'q':
+                            sys.exit('Exiting...')
+                        elif option == '<':
+                            lower_game_index -= display_count
+                        elif option == '>':
+                            lower_game_index += display_count
+                        else:
+                            game = games[int(option) - 1]
+                        break
+        else:
+            game = self.config.game
+
+        return game
+
+    def link(self):
+        if self.config.create_dirs:
             if not os.path.exists(self.config.source_dir):
                 os.makedirs(self.config.source_dir)
             if not os.path.exists(self.config.target_dir):
                 os.makedirs(self.config.target_dir)
 
-        self._fix_paths()
+        game = self._get_game()
+        print('testing=', game)
+        quit(0)
+        self._fix_paths(game)
 
         source_exists = os.path.exists(self.source_path)
         target_exists = os.path.exists(self.target_path)
