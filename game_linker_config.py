@@ -5,12 +5,12 @@ import yaml
 
 class GameLinkerConfig:
     def __init__(self):
-        self.config = None
         self.config_path = os.path.join(os.path.dirname(__file__), 'config.yaml')
-        self.platform = None
+        self.platform: str = None
         self.target = 'ssd'
         self.source = 'hdd'
-        self.game = None
+        self.game: str = None
+        self.ignore_games = []
         self.reverse = False
         self.create_dirs = False
         self.exact = False
@@ -49,6 +49,11 @@ class GameLinkerConfig:
             current_dir = os.getcwd()
             self.platform = self._get_platform_from_dir(current_dir)
             assert self.platform
+
+        if self.config[self.platform]['ignore']:
+            self.ignore_games = self.config[self.platform]['ignore']
+            assert isinstance(self.ignore_games, list)
+        self.ignore_games = [g for g in self.ignore_games if g]
 
         if args.source:
             self.source = args.source
