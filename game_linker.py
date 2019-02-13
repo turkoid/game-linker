@@ -118,7 +118,8 @@ class GameLinker:
         assert self.game
         self._fix_paths()
         while True:
-            confirm = input(f'Are you sure you want to link "{self.game}"? ')
+            link_msg = "unlink" if self.config.reverse else "link"
+            confirm = input(f'Are you sure you want to {link_msg} "{self.game}"? ')
             if not confirm:
                 continue
             confirm = confirm.strip().lower()
