@@ -1,8 +1,10 @@
 import os
 import shutil
+
 from tqdm import tqdm
 
-from util import fix_path_case, walkdir
+from util import fix_path_case
+from util import walkdir
 
 _orig_copyfileobj = shutil.copyfileobj
 
@@ -27,11 +29,13 @@ class CopyProgress:
     def _build_bar(self):
         total = 0
         if os.path.isdir(self.src):
-            for filepath in tqdm(walkdir(self.src), unit="files", desc='Determining src size'):
+            for filepath in tqdm(
+                walkdir(self.src), unit="files", desc="Determining src size"
+            ):
                 total += os.stat(filepath).st_size
         else:
             total = os.stat(self.src).st_size
-        self.bar = tqdm(total=total, unit='B', unit_scale=True, unit_divisor=1024)
+        self.bar = tqdm(total=total, unit="B", unit_scale=True, unit_divisor=1024)
 
     @staticmethod
     def copy(src, dst, follow_symlinks=True):

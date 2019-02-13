@@ -1,14 +1,15 @@
 import argparse
 import os
+
 import yaml
 
 
 class GameLinkerConfig:
     def __init__(self):
-        self.config_path = os.path.join(os.path.dirname(__file__), 'config.yaml')
+        self.config_path = os.path.join(os.path.dirname(__file__), "config.yaml")
         self.platform: str = None
-        self.target = 'ssd'
-        self.source = 'hdd'
+        self.target = "ssd"
+        self.source = "hdd"
         self.game: str = None
         self.ignore_games = []
         self.reverse = False
@@ -18,16 +19,37 @@ class GameLinkerConfig:
 
     def _build_arg_parser(self):
         parser = argparse.ArgumentParser(
-            description='Moves a game folder to different location and creates a link to it')
-        parser.add_argument('-c', '--config', help='location of config file')
-        parser.add_argument('-p', '--platform', help='gaming platform')
-        parser.add_argument('-s', '--source', default='hdd',
-                            help='the original location of the game folder (where the link will be created)')
-        parser.add_argument('-t', '--target', default='ssd', help='final location of game folder')
-        parser.add_argument('-r', '--reverse', action='store_true', help='reverses the operation')
-        parser.add_argument('-d', '--create-dirs', action='store_true', help='creates the directory if missing')
-        parser.add_argument('-e', '--exact', action='store_true', help='finds the game using exact match')
-        parser.add_argument('game', nargs='?', default='', help='full/partial game name')
+            description="Moves a game folder to different location and creates a link to it"
+        )
+        parser.add_argument("-c", "--config", help="location of config file")
+        parser.add_argument("-p", "--platform", help="gaming platform")
+        parser.add_argument(
+            "-s",
+            "--source",
+            default="hdd",
+            help="the original location of the game folder (where the link will be created)",
+        )
+        parser.add_argument(
+            "-t", "--target", default="ssd", help="final location of game folder"
+        )
+        parser.add_argument(
+            "-r", "--reverse", action="store_true", help="reverses the operation"
+        )
+        parser.add_argument(
+            "-d",
+            "--create-dirs",
+            action="store_true",
+            help="creates the directory if missing",
+        )
+        parser.add_argument(
+            "-e",
+            "--exact",
+            action="store_true",
+            help="finds the game using exact match",
+        )
+        parser.add_argument(
+            "game", nargs="?", default="", help="full/partial game name"
+        )
         return parser
 
     def _parse_arguments(self):
@@ -38,7 +60,7 @@ class GameLinkerConfig:
 
         if args.config:
             self.config_path = args.config
-        with open(self.config_path, 'r') as f:
+        with open(self.config_path, "r") as f:
             self.config = yaml.load(f)
 
         if args.platform:
@@ -49,8 +71,8 @@ class GameLinkerConfig:
             self.platform = self._get_platform_from_dir(current_dir)
             assert self.platform
 
-        if self.config[self.platform]['ignore']:
-            self.ignore_games = self.config[self.platform]['ignore']
+        if self.config[self.platform]["ignore"]:
+            self.ignore_games = self.config[self.platform]["ignore"]
             assert isinstance(self.ignore_games, list)
             self.ignore_games = [g.lower() for g in self.ignore_games if g]
 
