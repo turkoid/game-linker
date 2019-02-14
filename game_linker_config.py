@@ -71,7 +71,7 @@ class GameLinkerConfig:
             self.platform = self._get_platform_from_dir(current_dir)
             assert self.platform
 
-        if self.config[self.platform]["ignore"]:
+        if "ignore" in self.config[self.platform]:
             self.ignore_games = self.config[self.platform]["ignore"]
             assert isinstance(self.ignore_games, list)
             self.ignore_games = [g.lower() for g in self.ignore_games if g]
