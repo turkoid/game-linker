@@ -12,6 +12,8 @@ bethesda:
 origin:
   hdd: C:\home\games\origin
   ssd: C:\home\games\ssd\origin
+  ignore:
+    - installers
 gog:
   hdd: C:\home\games\gog
   ssd: C:\home\games\ssd\gog
@@ -19,8 +21,8 @@ battle.net:
   hdd: C:\home\games\battle.net
   ssd: C:\home\games\ssd\battle.net
 epic:
-  hdd: C:\home\games\epic
+  hdd: C:\home\games\bucket\epic
   ssd: C:\home\games\ssd\epic
 twitch:
-  hdd: C:\home\games\epic
-  ssd: C:\home\games\ssd\epic
+  hdd: C:\home\games\twitch
+  ssd: C:\home\games\ssd\twitch

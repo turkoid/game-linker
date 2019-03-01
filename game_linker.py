@@ -93,8 +93,9 @@ class GameLinker:
                 print(self._get_padded_option(">", "Next", pad))
             valid_options.append("q")
             print(self._get_padded_option("q", "Exit", pad))
+            game = None
             while True:
-                option = input("What game? ") or ""
+                option = input("What game? ")
                 option = option.strip().lower()
                 if option in valid_options:
                     if option == "q":
