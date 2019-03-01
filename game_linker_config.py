@@ -61,7 +61,7 @@ class GameLinkerConfig:
         if args.config:
             self.config_path = args.config
         with open(self.config_path, "r") as f:
-            self.config = yaml.load(f)
+            self.config = yaml.load(f, Loader=yaml.FullLoader)
 
         if args.platform:
             self.platform = args.platform
