@@ -1,12 +1,13 @@
 import argparse
 import os
+from typing import Dict
 
 import yaml
 
 
 class GameLinkerConfig:
     def __init__(self):
-        self.config_path = os.path.join(os.path.dirname(__file__), "config.yaml")
+        self.config_path = os.path.join(os.path.dirname(__file__), "../config.yaml")
         self.platform: str = None
         self.target = "ssd"
         self.source = "hdd"
@@ -52,6 +53,9 @@ class GameLinkerConfig:
         )
         return parser
 
+    def get_platform_dirs(self, platform: str) -> Dict[str, str]:
+        return self.config[platform]["dirs"]
+
     def _parse_arguments(self):
         parser = self._build_arg_parser()
         args = parser.parse_args()
@@ -78,14 +82,15 @@ class GameLinkerConfig:
 
         if args.source:
             self.source = args.source
-        assert self.source in self.config[self.platform]
-        self.source_dir = os.path.normpath(self.config[self.platform][self.source])
+        platform_dirs = self.get_platform_dirs(self.platform)
+        assert self.source in platform_dirs
+        self.source_dir = os.path.normpath(platform_dirs[self.source])
         self.source_path = os.path.join(self.source_dir, self.game)
 
         if args.target:
             self.target = args.target
-        assert self.target in self.config[self.platform]
-        self.target_dir = os.path.normpath(self.config[self.platform][self.target])
+        assert self.target in platform_dirs
+        self.target_dir = os.path.normpath(platform_dirs[self.target])
         self.target_path = os.path.join(self.target_dir, self.game)
 
         assert self.source_path.lower() != self.target_path.lower()
@@ -101,7 +106,7 @@ class GameLinkerConfig:
     def _get_platform_from_dir(self, directory: str) -> str:
         directory = os.path.normpath(directory).lower()
         for platform, platform_dirs in self.config.items():
-            for _, platform_dir in platform_dirs.items():
-                platform_dir: directory = os.path.normpath(platform_dir).lower()
+            for platform_dir in self.get_platform_dirs(platform).values():
+                platform_dir = os.path.normpath(platform_dir)
                 if directory == platform_dir:
                     return platform
