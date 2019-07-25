@@ -1,0 +1,3 @@
+tqdm
+pyyaml
+pywin32

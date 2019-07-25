@@ -3,9 +3,9 @@ import os
 import sys
 from typing import Union
 
-from copy_progress import CopyProgress
-from game_linker_config import GameLinkerConfig
-from util import fix_path_case
+from game_linker.copy_progress import CopyProgress
+from game_linker.game_linker_config import GameLinkerConfig
+from game_linker.util import fix_path_case
 
 
 class GameLinker:

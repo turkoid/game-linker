@@ -3,8 +3,8 @@ import shutil
 
 from tqdm import tqdm
 
-from util import fix_path_case
-from util import walkdir
+from game_linker.util import fix_path_case
+from game_linker.util import walkdir
 
 _orig_copyfileobj = shutil.copyfileobj
 
