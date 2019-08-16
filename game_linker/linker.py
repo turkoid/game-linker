@@ -2,8 +2,8 @@ import _winapi
 import os
 import sys
 from typing import List
-from typing import Union
 
+from game_linker.choice_prompter import ChoicePrompter
 from game_linker.config import GameLinkerConfig
 from game_linker.copy_progress import CopyProgress
 from game_linker.util import fix_path_case
@@ -40,11 +40,6 @@ class GameLinker:
             if not source_exists:
                 game = os.path.basename(self.target_path)
                 self.source_path = os.path.join(self.source_dir, game)
-
-    def _get_padded_option(
-        self, option: Union[int, str], description: str, pad: int
-    ) -> str:
-        return f"{option:>{pad}}: {description}"
 
     def _is_game_dir(self, entry: os.DirEntry) -> bool:
         return (
@@ -88,43 +83,14 @@ class GameLinker:
         if len(games) == 1:
             return games[0]
 
-        game = None
-        lower_game_index = 1
-        display_count = 10
         if self.config.game:
             print(f'Found {len(games)} games containing "{self.config.game}"')
         else:
             print(f'Found {len(games)} games for "{self.config.platform}" platform')
-        while not game:
-            upper_game_index = min(lower_game_index + display_count - 1, len(games))
-            pad = len(str(upper_game_index))
-            valid_options = [str(n) for n in range(1, upper_game_index + 1)]
-            for game_index, game in enumerate(
-                games[lower_game_index - 1 : upper_game_index], start=lower_game_index
-            ):
-                print(self._get_padded_option(game_index, game, pad))
-            if lower_game_index > 1:
-                valid_options.append("<")
-                print(self._get_padded_option("<", "Previous", pad))
-            if upper_game_index < len(games):
-                valid_options.append(">")
-                print(self._get_padded_option(">", "Next", pad))
-            valid_options.append("q")
-            print(self._get_padded_option("q", "Exit", pad))
-            game = None
-            while True:
-                option = input("What game? ")
-                option = option.strip().lower()
-                if option in valid_options:
-                    if option == "q":
-                        sys.exit("Exiting...")
-                    elif option == "<":
-                        lower_game_index -= display_count
-                    elif option == ">":
-                        lower_game_index += display_count
-                    else:
-                        return games[int(option) - 1]
-                    break
+
+        prompter = ChoicePrompter(games, 10)
+        game = prompter.choose()
+        return game
 
     def link(self):
         if self.config.create_dirs:
