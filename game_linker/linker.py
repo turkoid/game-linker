@@ -6,7 +6,6 @@ from typing import List
 from game_linker.choice_prompter import ChoicePrompter
 from game_linker.config import GameLinkerConfig
 from game_linker.copy_progress import CopyProgress
-from game_linker.util import fix_path_case
 
 
 class GameLinker:
@@ -17,29 +16,6 @@ class GameLinker:
         self.target_dir = self.config.target_dir
         self.target_path = self.config.target_path
         self.game = self.config.game
-
-    def _fix_paths(self):
-        if os.path.exists(self.source_dir):
-            self.source_dir = fix_path_case(self.source_dir)
-        if os.path.exists(self.target_dir):
-            self.target_dir = fix_path_case(self.target_dir)
-
-        self.source_path = os.path.join(self.source_dir, self.game)
-        self.target_path = os.path.join(self.target_dir, self.game)
-
-        source_exists = os.path.exists(self.source_path)
-        target_exists = os.path.exists(self.target_path)
-
-        if source_exists:
-            self.source_path = fix_path_case(self.source_path)
-            if not target_exists:
-                game = os.path.basename(self.source_path)
-                self.target_path = os.path.join(self.target_dir, game)
-        if target_exists:
-            self.target_path = fix_path_case(self.target_path)
-            if not source_exists:
-                game = os.path.basename(self.target_path)
-                self.source_path = os.path.join(self.source_dir, game)
 
     def _is_game_dir(self, entry: os.DirEntry) -> bool:
         return (
@@ -102,7 +78,7 @@ class GameLinker:
         self.game = self._get_game()
         if not self.game:
             sys.exit("no game to link")
-        self._fix_paths()
+        self.config.fix_paths()
         while True:
             link_msg = "unlink" if self.config.reverse else "link"
             confirm = input(f'Are you sure you want to {link_msg} "{self.game}"? ')
