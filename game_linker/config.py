@@ -6,7 +6,7 @@ from typing import Dict
 import yaml
 
 from game_linker.choice_prompter import ChoicePrompter
-from game_linker.util import fix_path_case
+from game_linker.util import ask_yes_no
 
 
 class GameLinkerConfig:
@@ -78,6 +78,7 @@ class GameLinkerConfig:
             self.platform = self._get_platform_from_dir(current_dir)
         if not self.platform:
             self.platform = self._prompt_for_platform()
+        platform_dirs = self.get_platform_dirs(self.platform)
 
         if "ignore" in self.config[self.platform]:
             self.ignore_games = self.config[self.platform]["ignore"]
@@ -87,7 +88,6 @@ class GameLinkerConfig:
 
         if args.source:
             self.source = args.source
-        platform_dirs = self.get_platform_dirs(self.platform)
         if self.source not in platform_dirs:
             sys.exit(f"{self.source} not in {self.platform} config")
         self.source_dir = os.path.normpath(platform_dirs[self.source])
@@ -104,6 +104,12 @@ class GameLinkerConfig:
             sys.exit("source path and target path cannot be the same")
 
         self.create_dirs = args.create_dirs
+        if not self.create_dirs:
+            for dir in [self.source_dir, self.target_dir]:
+                if not os.path.exists(dir):
+                    print(f'"{dir}" does not exist.')
+                    if ask_yes_no("Do you want to create it?", default="y"):
+                        os.makedirs(dir)
 
         self.exact = args.exact
         if self.exact and not self.game:
@@ -111,32 +117,6 @@ class GameLinkerConfig:
 
         if args.reverse:
             self.reverse = True
-
-        self.fix_paths()
-
-    def fix_paths(self):
-        if os.path.exists(self.source_dir):
-            self.source_dir = fix_path_case(self.source_dir)
-        if os.path.exists(self.target_dir):
-            self.target_dir = fix_path_case(self.target_dir)
-
-        self.source_path = os.path.join(self.source_dir, self.game)
-        self.target_path = os.path.join(self.target_dir, self.game)
-
-        if self.game:
-            source_exists = os.path.exists(self.source_path)
-            target_exists = os.path.exists(self.target_path)
-
-            if source_exists:
-                self.source_path = fix_path_case(self.source_path)
-                if not target_exists:
-                    game = os.path.basename(self.source_path)
-                    self.target_path = os.path.join(self.target_dir, game)
-            if target_exists:
-                self.target_path = fix_path_case(self.target_path)
-                if not source_exists:
-                    game = os.path.basename(self.target_path)
-                    self.source_path = os.path.join(self.source_dir, game)
 
     def _prompt_for_platform(self) -> str:
         platforms = list(self.config.keys())
