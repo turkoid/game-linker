@@ -7,7 +7,7 @@ data_files = [
     ('README.md', '.'),
     ('config.yaml', '.'),
 ]
-a = Analysis(['game_linker\\run.py'],
+a = Analysis(['game_linker\\linker.py'],
              pathex=['D:\\dev\\python\\game-linker'],
              binaries=[],
              datas=data_files,
