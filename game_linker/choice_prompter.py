@@ -1,13 +1,16 @@
 import sys
 from typing import List
+from typing import Optional
 from typing import Union
 
 
 class ChoicePrompter:
-    def __init__(self, prompt: str, choices: List[str], display_count: int):
+    def __init__(
+        self, prompt: str, choices: List[str], display_count: Optional[int] = None
+    ):
         self.prompt = prompt
         self.choices = choices
-        self.display_count = display_count
+        self.display_count = display_count or len(self.choices)
 
     def _get_padded_option(
         self, option: Union[int, str], description: str, pad: int
