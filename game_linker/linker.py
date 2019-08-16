@@ -6,6 +6,7 @@ from typing import List
 from game_linker.choice_prompter import ChoicePrompter
 from game_linker.config import GameLinkerConfig
 from game_linker.copy_progress import CopyProgress
+from game_linker.util import ask_yes_no
 
 
 class GameLinker:
@@ -79,16 +80,11 @@ class GameLinker:
         if not self.game:
             sys.exit("no game to link")
         self.config.fix_paths()
-        while True:
-            link_msg = "unlink" if self.config.reverse else "link"
-            confirm = input(f'Are you sure you want to {link_msg} "{self.game}"? ')
-            if not confirm:
-                continue
-            confirm = confirm.strip().lower()
-            if confirm in ["y", "yes"]:
-                break
-            elif confirm in ["n", "no"]:
-                sys.exit("Exiting...")
+        link_msg = "unlink" if self.config.reverse else "link"
+        if not ask_yes_no(
+            f'Are you sure you want to {link_msg} "{self.game}"', default="n"
+        ):
+            sys.exit("Exiting...")
 
         source_exists = os.path.exists(self.source_path)
         target_exists = os.path.exists(self.target_path)
