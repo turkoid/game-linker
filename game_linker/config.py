@@ -110,6 +110,8 @@ class GameLinkerConfig:
                     print(f'"{dir}" does not exist.')
                     if ask_yes_no("Do you want to create it?", default="y"):
                         os.makedirs(dir)
+                    else:
+                        sys.exit("Exiting...")
 
         self.exact = args.exact
         if self.exact and not self.game:
