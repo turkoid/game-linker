@@ -5,6 +5,8 @@ from typing import Dict
 
 import yaml
 
+from game_linker.choice_prompter import ChoicePrompter
+
 
 class GameLinkerConfig:
     def __init__(self):
@@ -73,8 +75,8 @@ class GameLinkerConfig:
         else:
             current_dir = os.getcwd()
             self.platform = self._get_platform_from_dir(current_dir)
-            if not self.platform:
-                sys.exit("unable to retrieve platform from current directory")
+        if not self.platform:
+            self.platform = self._prompt_for_platform()
 
         if "ignore" in self.config[self.platform]:
             self.ignore_games = self.config[self.platform]["ignore"]
@@ -107,6 +109,13 @@ class GameLinkerConfig:
 
         if args.reverse:
             self.reverse = True
+
+    def _prompt_for_platform(self) -> str:
+        platforms = list(self.config.keys())
+        platforms.sort(key=lambda platform: platform.lower())
+        prompter = ChoicePrompter("Choose a platform: ", platforms)
+        platform = prompter.choose()
+        return platform
 
     def _get_platform_from_dir(self, directory: str) -> str:
         directory = os.path.normpath(directory).lower()
