@@ -116,7 +116,8 @@ class GameLinker:
                 os.makedirs(self.config.target_dir)
 
         self.game = self._get_game()
-        assert self.game
+        if not self.game:
+            sys.exit("no game to link")
         self._fix_paths()
         while True:
             link_msg = "unlink" if self.config.reverse else "link"
@@ -150,9 +151,11 @@ class GameLinker:
             if source_exists and target_exists:
                 sys.exit("Game folder exists in both locations")
             elif source_exists:
-                assert os.path.isdir(self.source_path)
+                if not os.path.isdir(self.source_path):
+                    sys.exit(f"{self.source_path} is not a directory")
                 CopyProgress.move(self.source_path, self.target_path)
-            assert os.path.isdir(self.target_path)
+            if not os.path.isdir(self.target_path):
+                sys.exit(f"{self.target_path} is not a directory")
             _winapi.CreateJunction(self.target_path, self.source_path)
             print(f"Junction created: {self.source_path} ==> {self.target_path}")
 
