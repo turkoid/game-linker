@@ -1,6 +1,7 @@
 import _winapi
 import os
 import sys
+from typing import List
 from typing import Union
 
 from game_linker.config import GameLinkerConfig
@@ -45,22 +46,40 @@ class GameLinker:
     ) -> str:
         return f"{option:>{pad}}: {description}"
 
-    def _get_game(self):
+    def _is_game_dir(self, entry: os.DirEntry) -> bool:
+        return (
+            entry.is_dir()
+            and self.game.lower() in entry.name.lower()
+            and entry.name.lower() not in self.config.ignore_games
+        )
+
+    def get_games_list(self) -> List[str]:
+        target_games = {
+            entry.name
+            for entry in os.scandir(self.target_dir)
+            if self._is_game_dir(entry)
+        }
+        if self.config.reverse:
+            # only list games in the target directory
+            games = target_games
+        else:
+            # list games in source or target, but not both
+            source_games = {
+                entry.name
+                for entry in os.scandir(self.source_dir)
+                if self._is_game_dir(entry)
+            }
+            games = source_games.symmetric_difference(target_games)
+
+        games_list = list(games)
+        games_list.sort(key=lambda g: g.lower())
+        return games_list
+
+    def _get_game(self) -> str:
         if self.config.exact:
             return self.game
-        game = self.game.lower()
-        games = []
-        for entry in os.scandir(self.source_dir):
-            if entry.is_dir() and game in entry.name.lower():
-                games.append(entry.name)
-        for entry in os.scandir(self.target_dir):
-            if (
-                entry.is_dir()
-                and game in entry.name.lower()
-                and entry.name not in games
-            ):
-                games.append(entry.name)
-        games = [g for g in games if g.lower() not in self.config.ignore_games]
+
+        games = self.get_games_list()
         if not games:
             if self.config.game:
                 sys.exit(f'No games found containing "{self.config.game}"')
@@ -69,7 +88,6 @@ class GameLinker:
         if len(games) == 1:
             return games[0]
 
-        games.sort(key=lambda g: g.lower())
         game = None
         lower_game_index = 1
         display_count = 10
