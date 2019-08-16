@@ -4,7 +4,8 @@ from typing import Union
 
 
 class ChoicePrompter:
-    def __init__(self, choices: List[str], display_count: int):
+    def __init__(self, prompt: str, choices: List[str], display_count: int):
+        self.prompt = prompt
         self.choices = choices
         self.display_count = display_count
 
@@ -37,7 +38,7 @@ class ChoicePrompter:
             print(self._get_padded_option("q", "Exit", pad))
             choice = None
             while True:
-                option = input("What game? ")
+                option = input(self.prompt)
                 option = option.strip().lower()
                 if option in valid_options:
                     if option == "q":

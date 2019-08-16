@@ -88,7 +88,7 @@ class GameLinker:
         else:
             print(f'Found {len(games)} games for "{self.config.platform}" platform')
 
-        prompter = ChoicePrompter(games, 10)
+        prompter = ChoicePrompter("What game? ", games, 10)
         game = prompter.choose()
         return game
 
