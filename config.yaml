@@ -37,4 +37,4 @@ twitch:
 bucket:
   dirs:
     hdd: c:\home\games\bucket
-    ssd: c:\home\games\bucket
+    ssd: c:\home\games\ssd\bucket
