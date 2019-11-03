@@ -38,3 +38,7 @@ bucket:
   dirs:
     hdd: c:\home\games\bucket
     ssd: c:\home\games\ssd\bucket
+windows:
+  dirs:
+    hdd: g:\WindowsApps
+    ssd: c:\home\games\ssd\windows
