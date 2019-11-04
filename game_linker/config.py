@@ -91,7 +91,6 @@ class GameLinkerConfig:
         if not self.platform:
             if self.reverse:
                 self.platform, self.game = self._prompt_for_all_games()
-                print(self.platform, self.game)
                 self.exact = True
             else:
                 self.platform = self._prompt_for_platform()
