@@ -95,6 +95,11 @@ class GameLinkerConfig:
             else:
                 self.platform = self._prompt_for_platform()
         platform_dirs = self.get_platform_dirs(self.platform)
+        for location, directory in platform_dirs.items():
+            if "windowsapps" in directory.lower():
+                sys.exit(
+                    "Currently linking microsoft store apps is not supported. Use the built-in windows app move under settings."
+                )
 
         if self.source not in platform_dirs:
             sys.exit(f"{self.source} not in {self.platform} config")
@@ -120,10 +125,6 @@ class GameLinkerConfig:
 
     def get_platform_dir(self, platform: str, location: str) -> str:
         platform_dir = os.path.normpath(self.config[platform]["dirs"][location])
-        if "windowsapps" in platform_dir.lower():
-            sys.exit(
-                "Currently linking microsoft store apps is not supported. Use the built-in windows app move under settings."
-            )
         return platform_dir
 
     @property
