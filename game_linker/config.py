@@ -119,7 +119,12 @@ class GameLinkerConfig:
             sys.exit("--exact used, but no game name supplied")
 
     def get_platform_dir(self, platform: str, location: str) -> str:
-        return os.path.normpath(self.config[platform]["dirs"][location])
+        platform_dir = os.path.normpath(self.config[platform]["dirs"][location])
+        if "windowsapps" in platform_dir.lower():
+            sys.exit(
+                "Currently linking microsoft store apps is not supported. Use the built-in windows app move under settings."
+            )
+        return platform_dir
 
     @property
     def source_dir(self) -> str:
