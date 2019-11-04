@@ -1,7 +1,11 @@
 import argparse
 import os
+import re
 import sys
 from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 import yaml
 
@@ -12,14 +16,14 @@ from game_linker.util import ask_yes_no
 class GameLinkerConfig:
     def __init__(self):
         self.config_path = os.path.join(os.path.dirname(__file__), "..", "config.yaml")
-        self.platform: str = None
+        self.platform: Optional[str] = None
         self.target = "ssd"
         self.source = "hdd"
-        self.game: str = None
-        self.ignore_games = []
+        self.game: Optional[str] = None
         self.reverse = False
         self.create_dirs = False
         self.exact = False
+        self._ignore_dirs = None
         self._parse_arguments()
 
     def _build_arg_parser(self):
@@ -63,12 +67,20 @@ class GameLinkerConfig:
         args = parser.parse_args()
 
         self.game = args.game or ""
+        self.exact = args.exact
 
         if args.config:
             self.config_path = args.config
         with open(self.config_path, "r") as f:
             self.config = yaml.load(f, Loader=yaml.FullLoader)
 
+        if args.source:
+            self.source = args.source
+        if args.target:
+            self.target = args.target
+
+        if args.reverse:
+            self.reverse = True
         if args.platform:
             self.platform = args.platform
             if self.platform not in self.config:
@@ -77,28 +89,19 @@ class GameLinkerConfig:
             current_dir = os.getcwd()
             self.platform = self._get_platform_from_dir(current_dir)
         if not self.platform:
-            self.platform = self._prompt_for_platform()
+            if self.reverse:
+                self.platform, self.game = self._prompt_for_all_games()
+                print(self.platform, self.game)
+                self.exact = True
+            else:
+                self.platform = self._prompt_for_platform()
         platform_dirs = self.get_platform_dirs(self.platform)
 
-        if "ignore" in self.config[self.platform]:
-            self.ignore_games = self.config[self.platform]["ignore"]
-            if not isinstance(self.ignore_games, list):
-                sys.exit("ignore needs to be a list")
-            self.ignore_games = [g.lower() for g in self.ignore_games if g]
-
-        if args.source:
-            self.source = args.source
         if self.source not in platform_dirs:
             sys.exit(f"{self.source} not in {self.platform} config")
-        self.source_dir = os.path.normpath(platform_dirs[self.source])
-        self.source_path = os.path.join(self.source_dir, self.game)
 
-        if args.target:
-            self.target = args.target
         if self.target not in platform_dirs:
             sys.exit(f"{self.target} not in {self.platform} config")
-        self.target_dir = os.path.normpath(platform_dirs[self.target])
-        self.target_path = os.path.join(self.target_dir, self.game)
 
         if self.source_path.lower() == self.target_path.lower():
             sys.exit("source path and target path cannot be the same")
@@ -113,12 +116,103 @@ class GameLinkerConfig:
                     else:
                         sys.exit("Exiting...")
 
-        self.exact = args.exact
         if self.exact and not self.game:
             sys.exit("--exact used, but no game name supplied")
 
-        if args.reverse:
-            self.reverse = True
+    def get_platform_dir(self, platform: str, location: str) -> str:
+        return os.path.normpath(self.config[platform]["dirs"][location])
+
+    @property
+    def source_dir(self) -> str:
+        return self.get_platform_dir(self.platform, self.source)
+
+    @property
+    def source_path(self) -> str:
+        return os.path.join(self.source_dir, self.game)
+
+    @property
+    def target_dir(self) -> str:
+        return self.get_platform_dir(self.platform, self.target)
+
+    @property
+    def target_path(self) -> str:
+        return os.path.join(self.target_dir, self.game)
+
+    def get_ignore_dirs_for_platform(self, platform: str) -> List[str]:
+        ignore_dirs = []
+        if "ignore" in self.config[platform]:
+            ignore_dirs = self.config[platform]["ignore"]
+            ignore_dirs = [dir.lower() for dir in ignore_dirs if dir]
+        return ignore_dirs
+
+    @property
+    def ignore_dirs(self) -> List[str]:
+        if self._ignore_dirs is None:
+            self._ignore_dirs = self.get_ignore_dirs_for_platform(self.platform)
+        return self._ignore_dirs
+
+    def _is_game_match(self, game: str) -> bool:
+        if self.exact:
+            return game.lower() == self.game.lower()
+        elif self.game:
+            return self.game.lower() in game.lower()
+        else:
+            return True
+
+    def is_game_dir(
+        self, entry: os.DirEntry, ignore_dirs: Optional[List[str]] = None
+    ) -> bool:
+        if ignore_dirs is None:
+            ignore_dirs = self.ignore_dirs
+        return (
+            entry.is_dir()
+            and self._is_game_match(entry.name)
+            and entry.name.lower() not in ignore_dirs
+        )
+
+    def get_games_in_directory(
+        self, directory: str, ignore_dirs: Optional[List[str]] = None
+    ) -> List[str]:
+        if not os.path.exists(directory):
+            return []
+        if ignore_dirs is None:
+            ignore_dirs = self.ignore_dirs
+        games = [
+            entry.name
+            for entry in os.scandir(directory)
+            if self.is_game_dir(entry, ignore_dirs)
+        ]
+        return games
+
+    def get_games_for_platform(self, platform: str, location: str) -> List[str]:
+        location_dir = self.get_platform_dir(platform, location)
+        ignore_dirs = self.get_ignore_dirs_for_platform(platform)
+        return self.get_games_in_directory(location_dir, ignore_dirs)
+
+    @property
+    def source_games(self) -> List[str]:
+        return self.get_games_in_directory(self.source_dir)
+
+    @property
+    def target_games(self) -> List[str]:
+        return self.get_games_in_directory(self.target_dir)
+
+    def get_games(self, platform: str) -> List[str]:
+        target_games = set(self.get_games_for_platform(platform, self.target))
+        if self.reverse:
+            # only list games in the target directory
+            games = target_games
+        else:
+            # list games in source or target, but not both
+            source_games = set(self.get_games_for_platform(platform, self.source))
+            games = source_games.symmetric_difference(target_games)
+        games = list(games)
+        games.sort(key=lambda g: g.lower())
+        return games
+
+    @property
+    def games(self) -> List[str]:
+        return self.get_games(self.platform)
 
     def _prompt_for_platform(self) -> str:
         platforms = list(self.config.keys())
@@ -134,3 +228,18 @@ class GameLinkerConfig:
                 platform_dir = os.path.normpath(platform_dir)
                 if directory == platform_dir:
                     return platform
+
+    def _prompt_for_all_games(self) -> Tuple[str, str]:
+        platforms = list(self.config.keys())
+        platforms.sort(key=lambda p: p.lower())
+        all_games = []
+        for platform in platforms:
+            platform_games = self.get_games(platform)
+            platform_games = [f"[{platform}] {game}" for game in platform_games]
+            all_games.extend(platform_games)
+        prompter = ChoicePrompter("What game? ", all_games, 10)
+        game = prompter.choose()
+        match = re.match(r"\[(.+?)\] (.+)", game)
+        platform = match.group(1)
+        game = match.group(2)
+        return platform, game
