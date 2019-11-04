@@ -4,6 +4,7 @@ steam:
     ssd: c:\home\games\ssd\steam
   ignore:
     - steamapps
+    - steam
 uplay:
   dirs:
     hdd: c:\home\games\uplay
@@ -26,6 +27,8 @@ battle.net:
   dirs:
     hdd: c:\home\games\battle.net
     ssd: c:\home\games\ssd\battle.net
+  ignore:
+    - Worl
 epic:
   dirs:
     hdd: c:\home\games\epic
@@ -42,3 +45,6 @@ windows:
   dirs:
     hdd: g:\WindowsApps
     ssd: c:\home\games\ssd\windows
+  ignore:
+    - Deleted
+    - MSIXVC
