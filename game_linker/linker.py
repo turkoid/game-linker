@@ -1,7 +1,6 @@
 import _winapi
 import os
 import sys
-from typing import List
 
 from game_linker.choice_prompter import ChoicePrompter
 from game_linker.config import GameLinkerConfig
@@ -43,16 +42,10 @@ class GameLinker:
                     game = os.path.basename(self.target_path)
                     self.source_path = os.path.join(self.source_dir, game)
 
-    @property
-    def games(self) -> List[str]:
-        games = self.config.games
-        games.sort(key=lambda g: g.lower())
-        return games
-
     def _get_game(self) -> str:
         if self.config.exact:
             return self.game
-        games = self.games
+        games = self.config.games
         if not games:
             if self.config.game:
                 sys.exit(f'No games found containing "{self.config.game}"')
