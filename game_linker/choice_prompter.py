@@ -8,6 +8,8 @@ class ChoicePrompter:
     def __init__(
         self, prompt: str, choices: List[str], display_count: Optional[int] = None
     ):
+        if not choices:
+            raise ValueError("No choices given.")
         self.prompt = prompt
         self.choices = choices
         self.display_count = display_count or len(self.choices)
@@ -18,6 +20,10 @@ class ChoicePrompter:
         return f"{option:>{pad}}: {description}"
 
     def choose(self):
+        if len(self.choices) == 1:
+            option = self.choices[0]
+            print(f"Only one option available. Choosing {option}")
+            return option
         lower_game_index = 1
         choice = None
         while not choice:
