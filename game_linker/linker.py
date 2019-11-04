@@ -43,40 +43,16 @@ class GameLinker:
                     game = os.path.basename(self.target_path)
                     self.source_path = os.path.join(self.source_dir, game)
 
-    def _is_game_dir(self, entry: os.DirEntry) -> bool:
-        return (
-            entry.is_dir()
-            and self.game.lower() in entry.name.lower()
-            and entry.name.lower() not in self.config.ignore_games
-        )
-
-    def get_games_list(self) -> List[str]:
-        target_games = {
-            entry.name
-            for entry in os.scandir(self.target_dir)
-            if self._is_game_dir(entry)
-        }
-        if self.config.reverse:
-            # only list games in the target directory
-            games = target_games
-        else:
-            # list games in source or target, but not both
-            source_games = {
-                entry.name
-                for entry in os.scandir(self.source_dir)
-                if self._is_game_dir(entry)
-            }
-            games = source_games.symmetric_difference(target_games)
-
-        games_list = list(games)
-        games_list.sort(key=lambda g: g.lower())
-        return games_list
+    @property
+    def games(self) -> List[str]:
+        games = self.config.games
+        games.sort(key=lambda g: g.lower())
+        return games
 
     def _get_game(self) -> str:
         if self.config.exact:
             return self.game
-
-        games = self.get_games_list()
+        games = self.games
         if not games:
             if self.config.game:
                 sys.exit(f'No games found containing "{self.config.game}"')
